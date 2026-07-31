@@ -1,5 +1,17 @@
 "use client";
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { ExternalLink, Trash2, ShoppingCart, CheckCircle2, Search, Plus, Minus, X, Link2 } from 'lucide-react';
+import useSupabaseCollection from '../hooks/useSupabaseCollection';
+
+const CATEGORIES = ['Clothes', 'Gear', 'Feeding', 'Care'];
+const CATEGORY_COLORS = {
+  Clothes: '#e58aa0',
+  Gear: '#5c9e8d',
+  Feeding: '#e0a458',
+  Care: '#6b9bd1',
+};
+const OWNERS = ['Baby', 'Mommy'];
+const OWNER_EMOJI = { Baby: '👶', Mommy: '👩' };
 
 const INITIAL_INVENTORY = [
   { id: 1, item: "Diaper dustbin", category: "Gear", quantity: 1, status: "Need to Buy", link: "", owner: "Baby" },
@@ -28,174 +40,211 @@ const INITIAL_INVENTORY = [
 ];
 
 export default function InventoryTracker() {
-  const [items, setItems] = useState(INITIAL_INVENTORY);
+  const { items, add, update, remove } = useSupabaseCollection('inventory', INITIAL_INVENTORY);
   const [newItem, setNewItem] = useState({ item: '', category: 'Gear', quantity: 1, status: 'Need to Buy', link: '', owner: 'Baby' });
+  const [showAdd, setShowAdd] = useState(false);
+  const [search, setSearch] = useState('');
+  const [ownerFilter, setOwnerFilter] = useState('All');
+  const [statusFilter, setStatusFilter] = useState('All');
 
   const handleToggleStatus = (id) => {
-    setItems(items.map(i => {
-      if (i.id === id) {
-        return { ...i, status: i.status === 'Procured' ? 'Need to Buy' : 'Procured' };
-      }
-      return i;
-    }));
+    const item = items.find(i => i.id === id);
+    if (!item) return;
+    update(id, { status: item.status === 'Procured' ? 'Need to Buy' : 'Procured' });
   };
 
   const handleAddItem = (e) => {
     e.preventDefault();
     if (!newItem.item.trim()) return;
-    setItems([{ ...newItem, id: Date.now() }, ...items]);
+    add({ ...newItem, quantity: Number(newItem.quantity) || 1 });
     setNewItem({ item: '', category: 'Gear', quantity: 1, status: 'Need to Buy', link: '', owner: 'Baby' });
+    setShowAdd(false);
   };
 
-  const handleLinkChange = (id, newLink) => {
-    setItems(items.map(i => i.id === id ? { ...i, link: newLink } : i));
+  const handleLinkChange = (id, newLink) => update(id, { link: newLink });
+  const handleDeleteItem = (id) => remove(id);
+  const handleQty = (id, current, delta) => {
+    const next = Math.max(1, (Number(current) || 1) + delta);
+    update(id, { quantity: next });
   };
 
   const needToBuyCount = items.filter(i => i.status === 'Need to Buy').length;
   const procuredCount = items.filter(i => i.status === 'Procured').length;
+  const progress = items.length ? Math.round((procuredCount / items.length) * 100) : 0;
 
-  const mommyItems = items.filter(i => i.owner === 'Mommy');
-  const babyItems = items.filter(i => i.owner === 'Baby');
+  const filtered = useMemo(() => {
+    return items.filter(i => {
+      if (ownerFilter !== 'All' && i.owner !== ownerFilter) return false;
+      if (statusFilter === 'To Buy' && i.status !== 'Need to Buy') return false;
+      if (statusFilter === 'Got it' && i.status !== 'Procured') return false;
+      if (search && !`${i.item} ${i.category}`.toLowerCase().includes(search.toLowerCase())) return false;
+      return true;
+    });
+  }, [items, ownerFilter, statusFilter, search]);
 
-  const renderTable = (tableItems) => (
-    <div style={{ overflowX: 'auto', paddingBottom: '1rem' }}>
-      <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
-        <thead>
-          <tr style={{ borderBottom: '2px solid rgba(0,0,0,0.1)' }}>
-            <th style={{ padding: '0.75rem 0.5rem', color: 'var(--text-secondary)' }}>Item</th>
-            <th style={{ padding: '0.75rem 0.5rem', color: 'var(--text-secondary)' }}>Qty</th>
-            <th style={{ padding: '0.75rem 0.5rem', color: 'var(--text-secondary)' }}>Link</th>
-            <th style={{ padding: '0.75rem 0.5rem', color: 'var(--text-secondary)' }}>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {tableItems.map(item => (
-            <tr key={item.id} style={{ borderBottom: '1px solid rgba(0,0,0,0.05)', backgroundColor: item.status === 'Procured' ? 'rgba(0,0,0,0.02)' : 'transparent' }}>
-              <td style={{ padding: '0.75rem 0.5rem', fontWeight: '500', color: item.status === 'Procured' ? 'var(--text-secondary)' : 'var(--text-primary)', textDecoration: item.status === 'Procured' ? 'line-through' : 'none' }}>
-                <div style={{ marginBottom: '2px' }}>{item.item}</div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{item.category}</div>
-              </td>
-              <td style={{ padding: '0.75rem 0.5rem', fontWeight: '600' }}>
-                {item.quantity}
-              </td>
-              <td style={{ padding: '0.75rem 0.5rem' }}>
-                {item.link ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                    <a href={item.link} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-color)', textDecoration: 'underline', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
-                      Link
-                    </a>
-                    <button onClick={() => handleLinkChange(item.id, '')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#e53e3e', fontSize: '0.75rem' }}>✕</button>
-                  </div>
-                ) : (
-                  <input 
-                    type="url"
-                    placeholder="Add..."
-                    className="input-field"
-                    style={{ padding: '0.25rem', fontSize: '0.75rem', width: '60px' }}
-                    onBlur={(e) => handleLinkChange(item.id, e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleLinkChange(item.id, e.target.value)}
-                  />
-                )}
-              </td>
-              <td style={{ padding: '0.75rem 0.5rem' }}>
-                <button 
-                  className={`btn ${item.status === 'Procured' ? 'btn-secondary' : ''}`}
-                  style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', minWidth: '90px' }}
-                  onClick={() => handleToggleStatus(item.id)}
-                >
-                  {item.status}
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
+  const renderCard = (item) => {
+    const done = item.status === 'Procured';
+    const catColor = CATEGORY_COLORS[item.category] || 'var(--accent-color)';
+    return (
+      <div key={item.id} className={`item-card ${done ? 'done' : ''}`}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+            <span className="item-name">{item.item}</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+              <span className="cat-dot" style={{ background: catColor }} />
+              {item.category}
+              <span style={{ opacity: 0.5 }}>·</span>
+              <span aria-hidden="true">{OWNER_EMOJI[item.owner]}</span> {item.owner}
+            </span>
+          </div>
+          <button className="icon-btn" onClick={() => handleDeleteItem(item.id)} title="Delete item" aria-label="Delete item">
+            <Trash2 size={16} />
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+          <div className="stepper" aria-label="Quantity">
+            <button type="button" onClick={() => handleQty(item.id, item.quantity, -1)} aria-label="Decrease"><Minus size={14} /></button>
+            <span>{item.quantity}</span>
+            <button type="button" onClick={() => handleQty(item.id, item.quantity, 1)} aria-label="Increase"><Plus size={14} /></button>
+          </div>
+          <button
+            type="button"
+            className={`status-toggle ${done ? 'done' : 'buy'}`}
+            onClick={() => handleToggleStatus(item.id)}
+          >
+            {done ? <><CheckCircle2 size={14} /> Got it</> : <><ShoppingCart size={14} /> To buy</>}
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+          <div className="search" style={{ flex: 1, padding: '0 0.55rem' }}>
+            <Link2 size={14} color="var(--text-secondary)" />
+            <input
+              type="url"
+              placeholder="Add link…"
+              defaultValue={item.link}
+              key={item.link}
+              style={{ fontSize: '0.8rem', padding: '0.45rem 0' }}
+              onBlur={(e) => handleLinkChange(item.id, e.target.value.trim())}
+              onKeyDown={(e) => { if (e.key === 'Enter') { handleLinkChange(item.id, e.target.value.trim()); e.target.blur(); } }}
+            />
+          </div>
+          {item.link && (
+            <a href={item.link} target="_blank" rel="noopener noreferrer" title="Open link" className="icon-btn" style={{ color: 'var(--accent-color)' }}>
+              <ExternalLink size={16} />
+            </a>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div style={{ paddingBottom: '2rem' }}>
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
-        <div className="glass-panel" style={{ flex: 1, padding: '1rem', textAlign: 'center' }}>
-          <div style={{ fontSize: '2rem', fontWeight: '700', color: '#e53e3e' }}>{needToBuyCount}</div>
-          <div className="subtitle" style={{ marginBottom: 0 }}>Need to Buy</div>
+      {/* Progress + stats */}
+      <div className="glass-panel" style={{ padding: '1.25rem 1.5rem', marginBottom: '1.25rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', gap: '1.25rem' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700 }}>
+              <ShoppingCart size={18} color="var(--danger)" /> {needToBuyCount} <span style={{ fontWeight: 500, color: 'var(--text-secondary)', fontSize: '0.85rem' }}>to buy</span>
+            </span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700 }}>
+              <CheckCircle2 size={18} color="var(--accent-color)" /> {procuredCount} <span style={{ fontWeight: 500, color: 'var(--text-secondary)', fontSize: '0.85rem' }}>got</span>
+            </span>
+          </div>
+          <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--accent-strong)' }}>{progress}% ready</span>
         </div>
-        <div className="glass-panel" style={{ flex: 1, padding: '1rem', textAlign: 'center' }}>
-          <div style={{ fontSize: '2rem', fontWeight: '700', color: 'var(--accent-color)' }}>{procuredCount}</div>
-          <div className="subtitle" style={{ marginBottom: 0 }}>Procured</div>
-        </div>
+        <div className="progress-track"><div className="progress-fill" style={{ width: `${progress}%` }} /></div>
       </div>
 
-      <div className="glass-panel" style={{ padding: '1.5rem', marginBottom: '2rem' }}>
-        <h3 className="title" style={{ fontSize: '1.25rem', marginBottom: '1rem' }}>Add New Item</h3>
-        <form onSubmit={handleAddItem} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <input 
-            className="input-field" 
-            placeholder="Item name..." 
-            value={newItem.item} 
-            onChange={e => setNewItem({...newItem, item: e.target.value})}
-            required
-          />
-          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-            <select 
-              className="input-field" 
-              style={{ flex: '1 1 100px' }}
-              value={newItem.owner}
-              onChange={e => setNewItem({...newItem, owner: e.target.value})}
-            >
-              <option>Baby</option>
-              <option>Mommy</option>
-            </select>
-            <select 
-              className="input-field" 
-              style={{ flex: '1 1 100px' }}
-              value={newItem.category}
-              onChange={e => setNewItem({...newItem, category: e.target.value})}
-            >
-              <option>Clothes</option>
-              <option>Gear</option>
-              <option>Feeding</option>
-              <option>Care</option>
-            </select>
-            <input 
-              type="number" 
-              className="input-field" 
-              style={{ width: '70px', flex: '0 0 70px' }} 
-              value={newItem.quantity}
-              onChange={e => setNewItem({...newItem, quantity: e.target.value})}
-              min="1"
+      {/* Toolbar */}
+      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '1.25rem' }}>
+        <div className="search" style={{ flex: '1 1 220px' }}>
+          <Search size={16} color="var(--text-secondary)" />
+          <input placeholder="Search items…" value={search} onChange={e => setSearch(e.target.value)} />
+          {search && <button className="icon-btn" style={{ width: 26, height: 26 }} onClick={() => setSearch('')} aria-label="Clear search"><X size={14} /></button>}
+        </div>
+        <div className="segmented">
+          {['All', 'Baby', 'Mommy'].map(o => (
+            <button key={o} className={ownerFilter === o ? 'active' : ''} onClick={() => setOwnerFilter(o)}>{o}</button>
+          ))}
+        </div>
+        <div className="segmented">
+          {['All', 'To Buy', 'Got it'].map(s => (
+            <button key={s} className={statusFilter === s ? 'active' : ''} onClick={() => setStatusFilter(s)}>{s}</button>
+          ))}
+        </div>
+        <button className="btn" onClick={() => setShowAdd(v => !v)} style={{ marginLeft: 'auto' }}>
+          {showAdd ? <><X size={16} /> Close</> : <><Plus size={16} /> Add item</>}
+        </button>
+      </div>
+
+      {/* Collapsible add form */}
+      {showAdd && (
+        <div className="glass-panel" style={{ padding: '1.5rem', marginBottom: '1.5rem', animation: 'popIn 0.2s ease both' }}>
+          <form onSubmit={handleAddItem} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <input
+              className="input-field"
+              placeholder="Item name…"
+              value={newItem.item}
+              onChange={e => setNewItem({ ...newItem, item: e.target.value })}
+              autoFocus
+              required
             />
-          </div>
-          <input 
-            className="input-field" 
-            placeholder="Link (e.g. Amazon URL)..." 
-            type="url"
-            value={newItem.link} 
-            onChange={e => setNewItem({...newItem, link: e.target.value})}
-          />
-          <button type="submit" className="btn">Add Item</button>
-        </form>
-      </div>
-
-      <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', width: '100%' }}>
-        {/* Mommy Column */}
-        <div className="glass-panel" style={{ flex: '1 1 45%', minWidth: '320px', padding: '1.5rem', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-            <span style={{ fontSize: '1.5rem' }}>👩</span>
-            <h3 className="title" style={{ fontSize: '1.25rem', marginBottom: 0, color: 'var(--accent-color)' }}>Mommy</h3>
-          </div>
-          {renderTable(mommyItems)}
+            <div>
+              <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>FOR</div>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                {OWNERS.map(o => (
+                  <button type="button" key={o} className={`chip ${newItem.owner === o ? 'active' : ''}`} onClick={() => setNewItem({ ...newItem, owner: o })}>
+                    <span aria-hidden="true">{OWNER_EMOJI[o]}</span> {o}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>CATEGORY</div>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                {CATEGORIES.map(c => (
+                  <button type="button" key={c} className={`chip ${newItem.category === c ? 'active' : ''}`} onClick={() => setNewItem({ ...newItem, category: c })}>
+                    <span className="cat-dot" style={{ background: CATEGORY_COLORS[c] }} /> {c}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)' }}>QTY</span>
+                <div className="stepper">
+                  <button type="button" onClick={() => setNewItem({ ...newItem, quantity: Math.max(1, Number(newItem.quantity) - 1) })} aria-label="Decrease"><Minus size={14} /></button>
+                  <span>{newItem.quantity}</span>
+                  <button type="button" onClick={() => setNewItem({ ...newItem, quantity: Number(newItem.quantity) + 1 })} aria-label="Increase"><Plus size={14} /></button>
+                </div>
+              </div>
+              <input
+                className="input-field"
+                style={{ flex: '1 1 200px' }}
+                placeholder="Link (optional)…"
+                type="url"
+                value={newItem.link}
+                onChange={e => setNewItem({ ...newItem, link: e.target.value })}
+              />
+            </div>
+            <button type="submit" className="btn"><Plus size={16} /> Add to list</button>
+          </form>
         </div>
+      )}
 
-        {/* Baby Column */}
-        <div className="glass-panel" style={{ flex: '1 1 45%', minWidth: '320px', padding: '1.5rem', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-            <span style={{ fontSize: '1.5rem' }}>👶</span>
-            <h3 className="title" style={{ fontSize: '1.25rem', marginBottom: 0, color: '#e53e3e' }}>Baby</h3>
-          </div>
-          {renderTable(babyItems)}
+      {/* Cards */}
+      {filtered.length === 0 ? (
+        <div className="glass-panel" style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+          No items match. Try clearing filters or add a new one.
         </div>
-      </div>
+      ) : (
+        <div className="item-grid">
+          {filtered.map(renderCard)}
+        </div>
+      )}
     </div>
   );
 }
