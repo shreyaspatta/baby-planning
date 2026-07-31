@@ -1,19 +1,21 @@
 "use client";
 import { useState } from 'react';
-import { Package, ClipboardList, BriefcaseMedical, Menu, X } from 'lucide-react';
+import { Package, ClipboardList, BriefcaseMedical, Menu, X, ListTodo } from 'lucide-react';
 import InventoryTracker from './components/InventoryTracker';
 import AdminTracker from './components/AdminTracker';
 import HospitalPrep from './components/HospitalPrep';
+import TaskBoard from './components/TaskBoard';
 import AuthGuard from './components/AuthGuard';
 
 const TABS = [
+  { id: 'tasks', label: 'Tasks', Icon: ListTodo },
   { id: 'inventory', label: 'Inventory', Icon: Package },
   { id: 'admin', label: 'Admin', Icon: ClipboardList },
   { id: 'hospital', label: 'Hospital Bag', Icon: BriefcaseMedical },
 ];
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState('inventory');
+  const [activeTab, setActiveTab] = useState('tasks');
   const [menuOpen, setMenuOpen] = useState(false);
 
   const active = TABS.find(t => t.id === activeTab);
@@ -67,6 +69,7 @@ export default function Home() {
           <p className="subtitle">Let&apos;s get ready for the little one.</p>
         </div>
 
+        {activeTab === 'tasks' && <TaskBoard />}
         {activeTab === 'inventory' && <InventoryTracker />}
         {activeTab === 'admin' && <AdminTracker />}
         {activeTab === 'hospital' && <HospitalPrep />}

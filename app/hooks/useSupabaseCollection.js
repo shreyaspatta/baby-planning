@@ -66,7 +66,7 @@ export default function useSupabaseCollection(board, initialItems) {
         return;
       }
 
-      if ((!data || data.length === 0) && !seededRef.current) {
+      if ((!data || data.length === 0) && !seededRef.current && initialItems.length > 0) {
         seededRef.current = true;
         const rows = initialItems.map(i => ({ board, data: stripId(i) }));
         const { data: inserted } = await supabase
