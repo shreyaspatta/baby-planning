@@ -1,6 +1,6 @@
 "use client";
 import { useState, useMemo } from 'react';
-import { Trash2, CheckCircle2, Circle, Plus, X, Clock, Info } from 'lucide-react';
+import { Trash2, Check, Plus, X, Clock, Info } from 'lucide-react';
 import useSupabaseCollection from '../hooks/useSupabaseCollection';
 
 const INITIAL_TASKS = [
@@ -94,26 +94,35 @@ export default function AdminTracker() {
           {filtered.map(task => {
             const done = task.status === 'Completed';
             return (
-              <div key={task.id} className={`item-card ${done ? 'done' : ''}`}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem' }}>
-                  <span className="item-name" style={{ fontSize: '1.05rem' }}>{task.task}</span>
-                  {task.deadline && (
-                    <span className={`badge ${done ? 'badge-success' : 'badge-warn'}`}>
-                      <Clock size={12} /> {task.deadline}
-                    </span>
+              <div key={task.id} className={`item-card ${done ? 'done' : ''}`} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: '0.85rem' }}>
+                <div
+                  className={`check-box ${done ? 'on' : ''}`}
+                  onClick={() => handleToggleStatus(task.id)}
+                  role="checkbox"
+                  aria-checked={done}
+                  aria-label={task.task}
+                  style={{ marginTop: '2px' }}
+                >
+                  {done && <Check size={14} strokeWidth={3} />}
+                </div>
+
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.4rem', minWidth: 0 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.6rem' }}>
+                    <span className="item-name" style={{ fontSize: '1.02rem' }}>{task.task}</span>
+                    {task.deadline && (
+                      <span className={`badge ${done ? 'badge-success' : 'badge-warn'}`} style={{ flexShrink: 0 }}>
+                        <Clock size={12} /> {task.deadline}
+                      </span>
+                    )}
+                  </div>
+                  {task.description && (
+                    <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: 1.45 }}>{task.description}</p>
                   )}
                 </div>
-                {task.description && (
-                  <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.45 }}>{task.description}</p>
-                )}
-                <div style={{ display: 'flex', gap: '0.75rem' }}>
-                  <button className={`btn ${done ? 'btn-secondary' : ''}`} style={{ flex: 1 }} onClick={() => handleToggleStatus(task.id)}>
-                    {done ? <><Circle size={16} /> Mark pending</> : <><CheckCircle2 size={16} /> Mark done</>}
-                  </button>
-                  <button className="icon-btn" onClick={() => handleDeleteTask(task.id)} aria-label="Delete task" title="Delete task">
-                    <Trash2 size={18} />
-                  </button>
-                </div>
+
+                <button className="icon-btn" onClick={() => handleDeleteTask(task.id)} aria-label="Delete task" title="Delete task" style={{ flexShrink: 0 }}>
+                  <Trash2 size={16} />
+                </button>
               </div>
             );
           })}
