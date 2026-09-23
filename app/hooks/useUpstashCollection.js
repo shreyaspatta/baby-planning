@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 function newId() {
@@ -35,10 +35,26 @@ export default function useUpstashCollection(board, initialItems = []) {
       .then(r => r.json())
       .then(data => {
         if (!data || data.length === 0) {
-          // Use initialItems and add IDs if they don't have them
-          const initial = initialItems.map(i => ({ id: newId(), ...i }));
+          // Check localStorage first (migrate old data)
+          const storageKey = `baby-${board}`;
+          let initial = [];
+          try {
+            const stored = localStorage.getItem(storageKey);
+            if (stored !== null) {
+              initial = JSON.parse(stored);
+            }
+          } catch (e) {
+            console.error('Failed to parse localStorage', e);
+          }
+
+          if (initial.length === 0 && initialItems.length > 0) {
+             initial = initialItems.map(i => ({ id: newId(), ...i }));
+          }
+
           setItems(initial);
-          saveToKV(initial);
+          if (initial.length > 0) {
+            saveToKV(initial);
+          }
         } else {
           setItems(data);
         }
