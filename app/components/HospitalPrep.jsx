@@ -1,7 +1,7 @@
-"use client";
+﻿"use client";
 import { useState } from 'react';
 import { Trash2, Check, Plus, X } from 'lucide-react';
-import useSupabaseCollection from '../hooks/useSupabaseCollection';
+import useUpstashCollection from '../hooks/useUpstashCollection';
 
 const CATEGORIES = ['General', 'Special Care'];
 
@@ -35,7 +35,7 @@ const INITIAL_BAG = [
 ];
 
 export default function HospitalPrep() {
-  const { items, add, update, remove } = useSupabaseCollection('hospital', INITIAL_BAG);
+  const { items, add, update, remove } = useUpstashCollection('hospital', INITIAL_BAG);
   const [newItem, setNewItem] = useState({ item: '', category: 'General' });
   const [showAdd, setShowAdd] = useState(false);
 
@@ -115,7 +115,7 @@ export default function HospitalPrep() {
       {showAdd && (
         <div className="glass-panel" style={{ padding: '1.5rem', marginBottom: '1.5rem', animation: 'popIn 0.2s ease both' }}>
           <form onSubmit={handleAddItem} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <input className="input-field" placeholder="Add an item…" value={newItem.item} onChange={e => setNewItem({ ...newItem, item: e.target.value })} autoFocus required />
+            <input className="input-field" placeholder="Add an itemâ€¦" value={newItem.item} onChange={e => setNewItem({ ...newItem, item: e.target.value })} autoFocus required />
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
               {CATEGORIES.map(c => (
                 <button type="button" key={c} className={`chip ${newItem.category === c ? 'active' : ''}`} onClick={() => setNewItem({ ...newItem, category: c })}>{c}</button>

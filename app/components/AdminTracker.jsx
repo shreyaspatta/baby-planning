@@ -1,7 +1,7 @@
-"use client";
+﻿"use client";
 import { useState, useMemo } from 'react';
 import { Trash2, Check, Plus, X, Clock, Info } from 'lucide-react';
-import useSupabaseCollection from '../hooks/useSupabaseCollection';
+import useUpstashCollection from '../hooks/useUpstashCollection';
 
 const INITIAL_TASKS = [
   { id: 1, task: "Notify Mutualiteit (Health Insurance)", description: "Must register baby immediately upon birth for NICU coverage.", deadline: "Day of birth", status: "Pending" },
@@ -11,7 +11,7 @@ const INITIAL_TASKS = [
 ];
 
 export default function AdminTracker() {
-  const { items: tasks, add, update, remove } = useSupabaseCollection('admin', INITIAL_TASKS);
+  const { items: tasks, add, update, remove } = useUpstashCollection('admin', INITIAL_TASKS);
   const [newTask, setNewTask] = useState({ task: '', description: '', deadline: '' });
   const [showAdd, setShowAdd] = useState(false);
   const [filter, setFilter] = useState('All');

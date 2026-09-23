@@ -1,7 +1,7 @@
-"use client";
+﻿"use client";
 import { useState, useMemo } from 'react';
 import { ExternalLink, Trash2, ShoppingCart, CheckCircle2, Search, Plus, Minus, X, Link2 } from 'lucide-react';
-import useSupabaseCollection from '../hooks/useSupabaseCollection';
+import useUpstashCollection from '../hooks/useUpstashCollection';
 
 const CATEGORIES = ['Clothes', 'Gear', 'Feeding', 'Care'];
 const CATEGORY_COLORS = {
@@ -11,7 +11,7 @@ const CATEGORY_COLORS = {
   Care: '#6b9bd1',
 };
 const OWNERS = ['Baby', 'Mommy'];
-const OWNER_EMOJI = { Baby: '👶', Mommy: '👩' };
+const OWNER_EMOJI = { Baby: 'ðŸ‘¶', Mommy: 'ðŸ‘©' };
 
 const INITIAL_INVENTORY = [
   { id: 1, item: "Diaper dustbin", category: "Gear", quantity: 1, status: "Need to Buy", link: "", owner: "Baby" },
@@ -40,7 +40,7 @@ const INITIAL_INVENTORY = [
 ];
 
 export default function InventoryTracker() {
-  const { items, add, update, remove } = useSupabaseCollection('inventory', INITIAL_INVENTORY);
+  const { items, add, update, remove } = useUpstashCollection('inventory', INITIAL_INVENTORY);
   const [newItem, setNewItem] = useState({ item: '', category: 'Gear', quantity: 1, status: 'Need to Buy', link: '', owner: 'Baby' });
   const [showAdd, setShowAdd] = useState(false);
   const [search, setSearch] = useState('');
@@ -93,7 +93,7 @@ export default function InventoryTracker() {
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
               <span className="cat-dot" style={{ background: catColor }} />
               {item.category}
-              <span style={{ opacity: 0.5 }}>·</span>
+              <span style={{ opacity: 0.5 }}>Â·</span>
               <span aria-hidden="true">{OWNER_EMOJI[item.owner]}</span> {item.owner}
             </span>
           </div>
@@ -122,7 +122,7 @@ export default function InventoryTracker() {
             <Link2 size={14} color="var(--text-secondary)" />
             <input
               type="url"
-              placeholder="Add link…"
+              placeholder="Add linkâ€¦"
               defaultValue={item.link}
               key={item.link}
               style={{ fontSize: '0.8rem', padding: '0.45rem 0' }}
@@ -162,7 +162,7 @@ export default function InventoryTracker() {
       <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '1.25rem' }}>
         <div className="search" style={{ flex: '1 1 220px' }}>
           <Search size={16} color="var(--text-secondary)" />
-          <input placeholder="Search items…" value={search} onChange={e => setSearch(e.target.value)} />
+          <input placeholder="Search itemsâ€¦" value={search} onChange={e => setSearch(e.target.value)} />
           {search && <button className="icon-btn" style={{ width: 26, height: 26 }} onClick={() => setSearch('')} aria-label="Clear search"><X size={14} /></button>}
         </div>
         <div className="segmented">
@@ -186,7 +186,7 @@ export default function InventoryTracker() {
           <form onSubmit={handleAddItem} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <input
               className="input-field"
-              placeholder="Item name…"
+              placeholder="Item nameâ€¦"
               value={newItem.item}
               onChange={e => setNewItem({ ...newItem, item: e.target.value })}
               autoFocus
@@ -224,7 +224,7 @@ export default function InventoryTracker() {
               <input
                 className="input-field"
                 style={{ flex: '1 1 200px' }}
-                placeholder="Link (optional)…"
+                placeholder="Link (optional)â€¦"
                 type="url"
                 value={newItem.link}
                 onChange={e => setNewItem({ ...newItem, link: e.target.value })}

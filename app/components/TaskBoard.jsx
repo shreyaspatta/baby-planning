@@ -1,7 +1,7 @@
-"use client";
+﻿"use client";
 import { useState, useMemo } from 'react';
 import { Plus, Trash2, Check, GripVertical, ChevronUp, ChevronDown } from 'lucide-react';
-import useSupabaseCollection from '../hooks/useSupabaseCollection';
+import useUpstashCollection from '../hooks/useUpstashCollection';
 
 const TAGS = [
   { label: 'Cleaning', color: '#6b9bd1' },
@@ -14,7 +14,7 @@ const TAGS = [
 const TAG_COLOR = Object.fromEntries(TAGS.map(t => [t.label, t.color]));
 
 export default function TaskBoard() {
-  const { items, add, update, remove } = useSupabaseCollection('tasks', []);
+  const { items, add, update, remove } = useUpstashCollection('tasks', []);
   const [text, setText] = useState('');
   const [tag, setTag] = useState('');
   const [dragId, setDragId] = useState(null);
@@ -67,14 +67,14 @@ export default function TaskBoard() {
 
   return (
     <div style={{ paddingBottom: '2rem' }}>
-      {/* Quick add — the main entry point */}
+      {/* Quick add â€” the main entry point */}
       <div className="glass-panel" style={{ padding: '1.5rem', marginBottom: '1.25rem' }}>
         <form onSubmit={handleAdd} style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
           <div style={{ display: 'flex', gap: '0.6rem' }}>
             <input
               className="input-field"
               style={{ fontSize: '1.05rem', padding: '0.85rem 1rem' }}
-              placeholder="Jot anything down… groceries, chores, reminders"
+              placeholder="Jot anything downâ€¦ groceries, chores, reminders"
               value={text}
               onChange={e => setText(e.target.value)}
             />
@@ -99,14 +99,14 @@ export default function TaskBoard() {
 
       {items.length > 0 && (
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 0.25rem 0.75rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-          <span>{items.length} task{items.length === 1 ? '' : 's'} · {doneCount} done</span>
-          <span style={{ fontSize: '0.78rem' }}>Drag or use ↑ ↓ to prioritize</span>
+          <span>{items.length} task{items.length === 1 ? '' : 's'} Â· {doneCount} done</span>
+          <span style={{ fontSize: '0.78rem' }}>Drag or use â†‘ â†“ to prioritize</span>
         </div>
       )}
 
       {sorted.length === 0 ? (
         <div className="glass-panel" style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-          Nothing here yet. Add your first task above — anything on your mind.
+          Nothing here yet. Add your first task above â€” anything on your mind.
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>

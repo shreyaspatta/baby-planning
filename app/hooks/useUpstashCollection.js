@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 function newId() {
@@ -15,7 +15,7 @@ function useDebounce(fn, delay) {
   }, [fn, delay]);
 }
 
-export default function useSupabaseCollection(board, initialItems = []) {
+export default function useUpstashCollection(board, initialItems = []) {
   const [items, setItems] = useState([]);
   const [ready, setReady] = useState(false);
   const fetchedRef = useRef(false);
