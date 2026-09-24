@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useState, useMemo } from 'react';
 import { Trash2, Check, Plus, X, Clock, Info } from 'lucide-react';
 import useUpstashCollection from '../hooks/useUpstashCollection';
